@@ -29,15 +29,15 @@ func Connect() *mongo.Collection {
 
 	if err != nil {
 		log.Println("error occured while creating mongo client ", err)
-	}
-
-	err = mongo_client.Ping(context.Background(), nil)
-	if err != nil {
-		log.Println("unable to ping the ")
 	} else {
 		fmt.Println("connected to mongodb")
 	}
 
+
+	err = mongo_client.Ping(context.Background(), nil)
+		var show model.Show
+		log.Println("unable to ping the ")
+	}
 	collection := mongo_client.Database("e-commerse").Collection("test_collection")
 
 	return collection
@@ -63,11 +63,11 @@ func insertData(ctx context.Context, collection *mongo.Collection) error {
 	}
 	result , err := collection.InsertOne(ctx, my_movie)
 
-	if err != nil{
-		log.Println("error occured while inserting the document", err)
-	
-		return fmt.Errorf("erro inside the insertData %w", err)
-	}
+	       if err != nil {
+		       log.Println("unable to ping the ")
+	       } else {
+		       fmt.Println("connected to mongodb")
+	       }
 
 	fmt.Println("inserted the document ", result)
 	return  nil
