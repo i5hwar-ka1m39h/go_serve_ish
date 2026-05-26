@@ -1,101 +1,89 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
-	"time"
 
-	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/i5hwar-ka1m39h/go_serve_ish/mongo_api/config"
+	"github.com/i5hwar-ka1m39h/go_serve_ish/mongo_api/controller"
+	"github.com/i5hwar-ka1m39h/go_serve_ish/mongo_api/middleware"
 )
 
-func Connect() *mongo.Collection {
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		log.Println("error occured while loadong env", err)
-	}
-
-	connection_url := os.Getenv("MONGO_URI")
-
-	conn_options := options.Client().ApplyURI(connection_url)
-
-	mongo_client, err := mongo.Connect(context.Background(), conn_options)
-
-	if err != nil {
-		log.Println("error occured while creating mongo client ", err)
-	} else {
-		fmt.Println("connected to mongodb")
-	}
-
-
-	err = mongo_client.Ping(context.Background(), nil)
-		var show model.Show
-		log.Println("unable to ping the ")
-	}
-	collection := mongo_client.Database("e-commerse").Collection("test_collection")
-
-	return collection
-}
-
-func insertData(ctx context.Context, collection *mongo.Collection) error {
-	select{
-	case <- ctx.Done():
-		return  ctx.Err()
-	default:
-
-	}	
-
-
-
-
-
-	my_movie := Show{
-		Title:       "land hamar chhota",
-		Description: "A action horror pic expressing monsterization of small dicks",
-		Rating:      4,
-		Genre:       []string{"action", "horror", "psycological", "gore", "melodrama"},
-	}
-	result , err := collection.InsertOne(ctx, my_movie)
-
-	       if err != nil {
-		       log.Println("unable to ping the ")
-	       } else {
-		       fmt.Println("connected to mongodb")
-	       }
-
-	fmt.Println("inserted the document ", result)
-	return  nil
-
-}
-
-type Show struct {
-	ID          string   `bson:"_id,omitempty" json:"id"`
-	Title       string   `bson:"title" json:"title"`
-	Description string   `bson:"descprition" json:"desc"`
-	Rating      int16    `bson:"rating" json:"rating"`
-	Genre       []string `bson:"genre" json:"genre"`
-}
-
+// Main is the starting point of any executable Go program.
+// In Go, the package must be named "main" and the starting function must be "main()".
 func main() {
+	// 1. Establish database connection and initialize MongoDB collections
+	config.Connect()
 
-	var show Show
-	coll := Connect()
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	// 2. Instantiate Go's built-in HTTP Router (ServeMux)
+	// mux acts as the central switchboard for the API. It matches the HTTP method
+	// and URL path of incoming requests and forwards them to the correct controller function.
+	mux := http.NewServeMux()
 
-	// insertData(ctx, coll)
+	// ============================================================================
+	// PUBLIC ENDPOINTS (No authentication required)
+	// ============================================================================
+	
+	// User Registration and Login
+	mux.HandleFunc("POST /register", controller.RegisterHandler)
+	mux.HandleFunc("POST /login", controller.LoginHandler)
 
-	err:= coll.FindOne(ctx, bson.M{"rating":4}).Decode(&show)
-	if err != nil{
-		log.Println("error fetching data", err)
+	// Catalog Browsing
+	mux.HandleFunc("GET /products", controller.ListProductsHandler)
+	mux.HandleFunc("GET /products/{id}", controller.GetProductHandler)
+	mux.HandleFunc("GET /categories", controller.ListCategoriesHandler)
+
+	// ============================================================================
+	// PROTECTED CUSTOMER ENDPOINTS (Require active authentication session)
+	// ============================================================================
+	
+	// User Profile
+	mux.Handle("GET /profile", middleware.Authenticate(http.HandlerFunc(controller.ProfileHandler)))
+
+	// Shopping Cart
+	mux.Handle("GET /cart", middleware.Authenticate(http.HandlerFunc(controller.GetCartHandler)))
+	mux.Handle("POST /cart", middleware.Authenticate(http.HandlerFunc(controller.AddToCartHandler)))
+	mux.Handle("DELETE /cart/{product_id}", middleware.Authenticate(http.HandlerFunc(controller.RemoveFromCartHandler)))
+
+	// Order & Checkout
+	mux.Handle("POST /orders", middleware.Authenticate(http.HandlerFunc(controller.PlaceOrderHandler)))
+	mux.Handle("GET /orders", middleware.Authenticate(http.HandlerFunc(controller.ListOrdersHandler)))
+	mux.Handle("GET /orders/{id}", middleware.Authenticate(http.HandlerFunc(controller.GetOrderHandler)))
+
+	// ============================================================================
+	// ADMINISTRATIVE ENDPOINTS (Protected: Requires Authenticated + Admin Role)
+	// ============================================================================
+	
+	// Admin Product Management
+	mux.Handle("POST /products", middleware.Authenticate(middleware.RequireAdmin(http.HandlerFunc(controller.CreateProductHandler))))
+	mux.Handle("PUT /products/{id}", middleware.Authenticate(middleware.RequireAdmin(http.HandlerFunc(controller.UpdateProductHandler))))
+	mux.Handle("DELETE /products/{id}", middleware.Authenticate(middleware.RequireAdmin(http.HandlerFunc(controller.DeleteProductHandler))))
+
+	// Admin Category Management
+	mux.Handle("POST /categories", middleware.Authenticate(middleware.RequireAdmin(http.HandlerFunc(controller.CreateCategoryHandler))))
+
+	// ============================================================================
+	// HTTP SERVER INITIALIZATION
+	// ============================================================================
+	
+	// Wrap the entire router inside our Logger middleware.
+	// This ensures that EVERY request gets logged to the console (GET, POST, error, latency, etc.)
+	loggedMux := middleware.Logger(mux)
+
+	// Retrieve port from .env config, default to "8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
 
-	jsonFormat,_ := json.Marshal(show)
-	fmt.Println("got this shit",string(jsonFormat))
+	fmt.Printf("==================================================\n")
+	fmt.Printf("🚀 E-COMMERCE BACKEND RUNNING ON PORT :%s\n", port)
+	fmt.Printf("==================================================\n")
+
+	// http.ListenAndServe takes a port address (e.g. ":8080") and our loggedMux handler.
+	// It blocks execution and runs the server loop, listening forever for incoming requests.
+	// If it fails (e.g. port is already in use), log.Fatal will print the error and exit the app.
+	log.Fatal(http.ListenAndServe(":"+port, loggedMux))
 }
