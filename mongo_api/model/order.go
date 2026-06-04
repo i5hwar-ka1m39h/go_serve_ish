@@ -20,14 +20,22 @@ const (
 	PaymentFailed    PaymentStatus = "Failed"
 )
 
+type OrderItem struct {
+	ProductId primitive.ObjectID `bson:"productId" json:"productId"`
+	Qunatity  int64              `bson:"quantity" json:"quantity"`
+	Price     float64            `bson:"quantity" json:"price"`
+}
+
 type Order struct {
 	ID                primitive.ObjectID `bson:"_id" json:"orderId"`
-	UserId            string             `bson:"userId" json:"userId"`
+	UserId            primitive.ObjectID `bson:"userId" json:"userId"`
 	Subtotal          uint64             `bson:"subtotal" json:"subtotal"`
 	Tax               uint64             `bson:"tax" json:"tax"`
 	ShippingCost      uint64             `bson:"shippingCost" json:"shippingCost,omitempty"`
 	Total             uint64             `bson:"total" json:"total"`
 	Status            Status             `bson:"status" json:"status"`
 	PaymentStatus     PaymentStatus      `bson:"paymentStatus" json:"paymentStatus"`
-	ShippingAddressId string             `bson:"shipAddrId" json:"shipAddrId`
+	ShippingAddressId primitive.ObjectID `bson:"shipAddrId" json:"shipAddrId"`
+
+	Item []OrderItem `bson:"orderItems" json:"orderItems"`
 }
