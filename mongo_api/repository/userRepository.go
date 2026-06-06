@@ -10,47 +10,67 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-
-
-type userRepository struct{
-	db mongo.Database
+type userRepository struct {
+	db         mongo.Database
 	collection string
 }
 
-
-func NewUserRepository(db mongo.Database, col string) model.UserRepository{
+func NewUserRepository(db mongo.Database, col string) model.UserRepository {
 	return &userRepository{
-		db : db,
+		db:         db,
 		collection: col,
 	}
 }
 
-
-func (usrRep *userRepository) CreateSingle(c context.Context, user *model.User) error{
+func (usrRep *userRepository) CreateSingle(c context.Context, user *model.User) error {
 	usrCol := usrRep.db.Collection(usrRep.collection)
 
 	_, err := usrCol.InsertOne(c, user)
 
-	return  err
+	return err
 }
 
-
-func (usrRep *userRepository) CreateMultiple(c context.Context, users []model.User)error{
+func (usrRep *userRepository) CreateMultiple(c context.Context, users []model.User) error {
 	usrCol := usrRep.db.Collection(usrRep.collection)
 
-	_, err :=usrCol.InsertMany(c, users)
+	_, err := usrCol.InsertMany(c, users)
 
-	return  err
+	return err
 }
 
+func (userRep *userRepository) GetByString(c context.Context, someStr string) ([]model.User, error) {
+	usrCol := userRep.db.Collection(userRep.collection)
 
-func (usrRep *userRepository) GetSingleById(c context.Context, userId string)(model.User, error){
+	var users []model.User
+
+	filter := bson.M{"$or": []bson.M{
+		{
+			"name": bson.M{
+				"$regex":   someStr,
+				"$options": "i",
+			},
+		}, {
+			"email": bson.M{
+				"$regex":   someStr,
+				"$options": "i",
+			},
+		},
+	}}
+
+	cursor, err := usrCol.Find(c, filter)
+	if err = cursor.All(c, &users); err != nil {
+		log.Println("error while cursoring", err)
+		return users, err
+	}
+
+	return users, nil
+}
+func (usrRep *userRepository) GetSingleById(c context.Context, userId string) (model.User, error) {
 	usrCol := usrRep.db.Collection(usrRep.collection)
-
 
 	var result model.User
 
-	actId , err := primitive.ObjectIDFromHex(userId)
+	actId, err := primitive.ObjectIDFromHex(userId)
 
 	if err != nil {
 		log.Println("error while getting objectid", err)
@@ -59,69 +79,65 @@ func (usrRep *userRepository) GetSingleById(c context.Context, userId string)(mo
 	filter := bson.D{{Key: "_id", Value: actId}}
 	err = usrCol.FindOne(c, filter).Decode(&result)
 
-	if err != nil{
+	if err != nil {
 		log.Println("error while finding single user by userId", err)
-		return  model.User{}, err
+		return model.User{}, err
 	}
 
-	return  result, nil
+	return result, nil
 
 }
 
-
-func (usrRep *userRepository) GetAll(c context.Context) ([]model.User, error){
+func (usrRep *userRepository) GetAll(c context.Context) ([]model.User, error) {
 	usrCol := usrRep.db.Collection(usrRep.collection)
 
 	var result []model.User
 
 	cursor, err := usrCol.Find(c, nil)
 
-	if err != nil{
-		log.Fatalln("error while getting all users", err)	
-		return  []model.User{}, err
+	if err != nil {
+		log.Fatalln("error while getting all users", err)
+		return []model.User{}, err
 	}
 
-	if err = cursor.All(c, &result); err != nil{
+	if err = cursor.All(c, &result); err != nil {
 		log.Fatalln("error while iterating in cursor", err)
-		return  []model.User{}, err
+		return []model.User{}, err
 	}
 
-	return  result, nil
+	return result, nil
 }
 
-func (usrRep *userRepository) UpdateSingle(c context.Context, userId string, user map[string]interface{})error{
+func (usrRep *userRepository) UpdateSingle(c context.Context, userId string, user map[string]interface{}) error {
 	usrCol := usrRep.db.Collection(usrRep.collection)
 
 	actId, err := primitive.ObjectIDFromHex(userId)
 
-	if err != nil{
+	if err != nil {
 		log.Fatalln("error while getting objectid", err)
 		return err
 	}
 
-
 	filter := bson.D{{Key: "_id", Value: actId}}
 	update := bson.M{"$set": user}
-	_, err  = usrCol.UpdateOne(c, filter, update)
+	_, err = usrCol.UpdateOne(c, filter, update)
 
 	return err
 }
 
-
 func (usrRep *userRepository) UpdateMultiple(
-	c context.Context, 
-	userIds []string, 
+	c context.Context,
+	userIds []string,
 	user map[string]interface{},
-	)error{
+) error {
 	usrCol := usrRep.db.Collection(usrRep.collection)
-
 
 	objIds := make([]primitive.ObjectID, 0, len(userIds))
 
-	for _, id := range userIds{
-		objId, err :=primitive.ObjectIDFromHex(id)
+	for _, id := range userIds {
+		objId, err := primitive.ObjectIDFromHex(id)
 
-		if err != nil{
+		if err != nil {
 			log.Println("error while converting from hex", err)
 			continue
 		}
@@ -129,10 +145,9 @@ func (usrRep *userRepository) UpdateMultiple(
 		objIds = append(objIds, objId)
 	}
 
-
 	filter := bson.M{
-		"_id":bson.M{
-			"$id":objIds,
+		"_id": bson.M{
+			"$id": objIds,
 		},
 	}
 
@@ -141,36 +156,33 @@ func (usrRep *userRepository) UpdateMultiple(
 	}
 	_, err := usrCol.UpdateMany(c, filter, update)
 
-	return  err
-
+	return err
 
 }
 
-
-func (usrRep *userRepository) DeleteSingle(c context.Context, userId string) error{
+func (usrRep *userRepository) DeleteSingle(c context.Context, userId string) error {
 	useCol := usrRep.db.Collection(usrRep.collection)
 
 	objId, err := primitive.ObjectIDFromHex(userId)
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
-	
-	filter := bson.D{{Key: "_id", Value: objId}}
-	_, err = useCol.DeleteOne(c,filter )
 
-	return  err
+	filter := bson.D{{Key: "_id", Value: objId}}
+	_, err = useCol.DeleteOne(c, filter)
+
+	return err
 }
 
-
-func (usrRep *userRepository) DeleteMultiple(c context.Context, userIds []string) error{
+func (usrRep *userRepository) DeleteMultiple(c context.Context, userIds []string) error {
 	usrCol := usrRep.db.Collection(usrRep.collection)
 
 	objIds := make([]primitive.ObjectID, 0, len(userIds))
 
-	for _, id := range userIds{
+	for _, id := range userIds {
 		objId, err := primitive.ObjectIDFromHex(id)
-		if err != nil{
+		if err != nil {
 			log.Println("error while converting from hex", err)
 			continue
 		}
@@ -184,13 +196,14 @@ func (usrRep *userRepository) DeleteMultiple(c context.Context, userIds []string
 		},
 	}
 
-	_, err:=usrCol.DeleteMany(c, filter)
-	return  err
+	_, err := usrCol.DeleteMany(c, filter)
+	return err
 }
 
-func (usrRep *userRepository) DeleteAll(c context.Context) error  {
+func (usrRep *userRepository) DeleteAll(c context.Context) error {
 	usrCol := usrRep.db.Collection(usrRep.collection)
 
-	_, err:= usrCol.DeleteMany(c, bson.M{})
-	return  err
+	_, err := usrCol.DeleteMany(c, bson.M{})
+	return err
 }
+

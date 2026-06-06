@@ -21,6 +21,7 @@ type ProductRepository interface {
 	CreateMultiple(c context.Context, products []Product) error
 	GetSingleById(c context.Context, productId string) (Product, error)
 	GetAll(c context.Context) ([]Product, error)
+	GetByStr(c context.Context, someStr string) ([]Product, error)
 	UpdateSingle(c context.Context, productId string, product map[string]any) error
 	UpdateMultiple(c context.Context, productIds []string, product map[string]any) error
 	DeleteSingle(c context.Context, productId string) error
