@@ -4,13 +4,16 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
 )
 
 type User struct {
-	ID       primitive.ObjectID `bson:"_id" json:"userId"`
-	Name     string             `bson:"name" json:"name"`
-	Email    string             `bson:"email" json:"email"`
-	Password string             `bson:"password" json:"-"`
+	ID        primitive.ObjectID `bson:"_id" json:"userId"`
+	Name      string             `bson:"name" json:"name"`
+	Email     string             `bson:"email" json:"email"`
+	Password  string             `bson:"password" json:"-"`
+	CreateAt  time.Time          `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`
 }
 
 type UserRepository interface {
@@ -24,4 +27,3 @@ type UserRepository interface {
 	DeleteMultiple(c context.Context, userIds []string) error
 	DeleteAll(c context.Context) error
 }
-

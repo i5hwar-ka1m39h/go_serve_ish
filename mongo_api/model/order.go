@@ -1,6 +1,11 @@
 package model
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"context"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
+)
 
 type Status string
 type PaymentStatus string
@@ -37,5 +42,14 @@ type Order struct {
 	PaymentStatus     PaymentStatus      `bson:"paymentStatus" json:"paymentStatus"`
 	ShippingAddressId primitive.ObjectID `bson:"shipAddrId" json:"shipAddrId"`
 
-	Item []OrderItem `bson:"orderItems" json:"orderItems"`
+	Item      []OrderItem `bson:"orderItems" json:"orderItems"`
+	CreateAt  time.Time   `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time   `bson:"updatedAt" json:"updatedAt"`
+}
+
+type OrderRepository interface {
+	CreateSingle(c context.Context, order *Order) error
+	GetSingleId(c context.Context, orderId string) (Order, error)
+	GetAllForUser(c context.Context, userId string) ([]Order, error)
+	UpdateSingle(c context.Context, orderId string, order Order) error
 }

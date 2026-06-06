@@ -2,8 +2,8 @@ package model
 
 import (
 	"context"
-
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
 )
 
 type Product struct {
@@ -12,6 +12,8 @@ type Product struct {
 	Description string             `bson:"description" json:"description,omitempty" `
 	Price       float64            `bson:"price" json:"price"`
 	Quantity    uint64             `bson:"quantity" json:"quantity"`
+	CreateAt    time.Time          `bson:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time          `bson:"updatedAt" json:"updatedAt"`
 }
 
 type ProductRepository interface {
@@ -25,4 +27,3 @@ type ProductRepository interface {
 	DeleteMultiple(c context.Context, productIds []string) error
 	DeleteAll(c context.Context) error
 }
-
