@@ -22,6 +22,26 @@ func NewProductRepository(db mongo.Database, col string) model.ProductRepository
 	}
 }
 
+func (prodRep *productRepository) GetByStr(c context.Context, someStr string) ([]model.Product, error) {
+	prdCol := prodRep.db.Collection(prodRep.collection)
+
+	var products []model.Product
+	filter := bson.M{"title": bson.M{"$regex": someStr, "$options": "i"}}
+
+	cursor, err := prdCol.Find(c, filter)
+	if err != nil {
+		log.Println("error from find", err)
+		return products, err
+	}
+
+	if err = cursor.All(c, &products); err != nil {
+		log.Println("error in cursor", err)
+		return products, err
+	}
+
+	return products, nil
+
+}
 func (prodRep *productRepository) CreateSingle(c context.Context, product *model.Product) error {
 	prodCol := prodRep.db.Collection(prodRep.collection)
 	_, err := prodCol.InsertOne(c, product)

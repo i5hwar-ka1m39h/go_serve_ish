@@ -15,6 +15,13 @@ type orderRepository struct {
 	collection string
 }
 
+func NewOrderRepository(db mongo.Database, col string) model.OrderRepository {
+	return &orderRepository{
+		db:         db,
+		collection: col,
+	}
+}
+
 func (ordRep *orderRepository) CreateSingle(c context.Context, order *model.Order) error {
 	ordCol := ordRep.db.Collection(ordRep.collection)
 
@@ -43,7 +50,7 @@ func (ordRep *orderRepository) GetSingleId(c context.Context, orderId string) (m
 	return order, nil
 }
 
-func (ordRep *orderRepository) GetAllForUSer(c context.Context, userId string) ([]model.Order, error) {
+func (ordRep *orderRepository) GetAllForUser(c context.Context, userId string) ([]model.Order, error) {
 	ordCol := ordRep.db.Collection(ordRep.collection)
 	objId, err := primitive.ObjectIDFromHex(userId)
 
@@ -53,5 +60,39 @@ func (ordRep *orderRepository) GetAllForUSer(c context.Context, userId string) (
 		return orders, err
 	}
 
-	filter := bson.D{{key: ""}}
+	filter := bson.D{{Key: "userId", Value: objId}}
+
+	cursor, err := ordCol.Find(c, filter)
+
+	if err != nil {
+		log.Println("error occred while getting all the orders", err)
+		return orders, err
+	}
+
+	if err = cursor.All(c, &orders); err != nil {
+		log.Println("failed to get all from cursor")
+		return orders, err
+	}
+
+	return orders, nil
+
+}
+
+func (ordRep *orderRepository) UpdateSingle(c context.Context, orderId string, order model.Order) error {
+	ordCol := ordRep.db.Collection(ordRep.collection)
+
+	objId, err := primitive.ObjectIDFromHex(orderId)
+	if err != nil {
+		log.Println("error converting objectId from hex", err)
+		return err
+	}
+
+	_, err = ordCol.UpdateByID(c, objId, order)
+	if err != nil {
+		log.Println("error occured while updating the order", err)
+		return err
+	}
+
+	return nil
+
 }
