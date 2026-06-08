@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,4 +19,17 @@ type Cart struct {
 	Items      []CartProduct      `bson:"items" json:"items"`
 	CreateAt   time.Time          `bson:"createdAt" json:"createdAt"`
 	UpdatedAt  time.Time          `bson:"updatedAt" json:"updatedAt"`
+}
+
+type CartRepository interface {
+	CreateCart(c context.Context, cart *Cart) error
+	UpdateCart(c context.Context, cartData map[string]any) error
+	GetCart(c context.Context, cartId string) (*Cart, error)
+}
+
+type CartUsercase interface {
+	CreateCart(c context.Context, cart *Cart) error
+	AddToCart(c context.Context, cartData map[string]any) error
+	RemoveFromCart(c context.Context, cartData map[string]any) error
+	GetCartDetails(c context.Context, cartId string) (*Cart, error)
 }

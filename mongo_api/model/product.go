@@ -28,3 +28,12 @@ type ProductRepository interface {
 	DeleteMultiple(c context.Context, productIds []string) error
 	DeleteAll(c context.Context) error
 }
+
+type ProductUsecase interface {
+	CreateSingleProduct(c context.Context, product *Product) error
+	CreateMultipeProduct(c context.Context, product map[string]any) error
+	GetSingleProduct(c context.Context, productId string) (Product, error)
+	GetAllProducts(c context.Context) ([]Product, error)
+	SearchProduct(c context.Context, productName string) ([]Product, error)
+	UpdateSingleProduct(c context.Context, productId string, updateData map[string]any) error
+}
