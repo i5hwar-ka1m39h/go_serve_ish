@@ -49,7 +49,14 @@ type Order struct {
 
 type OrderRepository interface {
 	CreateSingle(c context.Context, order *Order) error
-	GetSingleId(c context.Context, orderId string) (Order, error)
+	GetSingleId(c context.Context, orderId string) (*Order, error)
 	GetAllForUser(c context.Context, userId string) ([]Order, error)
-	UpdateSingle(c context.Context, orderId string, order Order) error
+	UpdateSingle(c context.Context, orderId string, updatedData map[string]any) error
+}
+
+type OrderUsecases interface {
+	CreateOrder(c context.Context, order *Order) error
+	UpdateOrder(c context.Context, orderId string, updateData map[string]any) error
+	GetOrderById(c context.Context, orderId string) (*Order, error)
+	GetAllOrderForUser(c context.Context, userId string) ([]Order, error)
 }
