@@ -37,7 +37,7 @@ func (userUc *userUsecase) UpdateUser(c context.Context, userId string, user map
 	return err
 }
 
-func (userUc *userUsecase) GetUserById(c context.Context, userId string) (model.User, error) {
+func (userUc *userUsecase) GetUserById(c context.Context, userId string) (*model.User, error) {
 	ctx, cancel := context.WithTimeout(c, userUc.contextTime)
 	defer cancel()
 

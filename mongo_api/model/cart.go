@@ -23,13 +23,13 @@ type Cart struct {
 
 type CartRepository interface {
 	CreateCart(c context.Context, cart *Cart) error
-	UpdateCart(c context.Context, cartData map[string]any) error
+	UpdateCart(c context.Context, cartId string, cartData map[string]any) error
 	GetCart(c context.Context, cartId string) (*Cart, error)
 }
 
 type CartUsercase interface {
 	CreateCart(c context.Context, cart *Cart) error
-	AddToCart(c context.Context, cartData map[string]any) error
-	RemoveFromCart(c context.Context, cartData map[string]any) error
+	AddToCart(c context.Context, cartId string, cartData map[string]any) error
+	RemoveFromCart(c context.Context, cartId string, cartData map[string]any) error
 	GetCartDetails(c context.Context, cartId string) (*Cart, error)
 }
