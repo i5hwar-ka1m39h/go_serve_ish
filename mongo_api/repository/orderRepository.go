@@ -29,14 +29,14 @@ func (ordRep *orderRepository) CreateSingle(c context.Context, order *model.Orde
 	return err
 }
 
-func (ordRep *orderRepository) GetSingleId(c context.Context, orderId string) (model.Order, error) {
+func (ordRep *orderRepository) GetSingleId(c context.Context, orderId string) (*model.Order, error) {
 	ordCol := ordRep.db.Collection(ordRep.collection)
 
 	objId, err := primitive.ObjectIDFromHex(orderId)
 
 	if err != nil {
 		log.Println("failed to convert string to objid", err)
-		return model.Order{}, err
+		return &model.Order{}, err
 	}
 
 	var order model.Order
@@ -44,10 +44,10 @@ func (ordRep *orderRepository) GetSingleId(c context.Context, orderId string) (m
 	err = ordCol.FindOne(c, filter).Decode(&order)
 	if err != nil {
 		log.Println("failed to get order", err)
-		return model.Order{}, err
+		return &model.Order{}, err
 	}
 
-	return order, nil
+	return &order, nil
 }
 
 func (ordRep *orderRepository) GetAllForUser(c context.Context, userId string) ([]model.Order, error) {
@@ -78,7 +78,7 @@ func (ordRep *orderRepository) GetAllForUser(c context.Context, userId string) (
 
 }
 
-func (ordRep *orderRepository) UpdateSingle(c context.Context, orderId string, order model.Order) error {
+func (ordRep *orderRepository) UpdateSingle(c context.Context, orderId string, order map[string]any) error {
 	ordCol := ordRep.db.Collection(ordRep.collection)
 
 	objId, err := primitive.ObjectIDFromHex(orderId)

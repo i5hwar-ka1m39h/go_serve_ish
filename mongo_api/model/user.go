@@ -20,7 +20,7 @@ type User struct {
 type UserRepository interface {
 	CreateSingle(c context.Context, user *User) error
 	CreateMultiple(c context.Context, users []User) error
-	GetSingleById(c context.Context, userId string) (User, error)
+	GetSingleById(c context.Context, userId string) (*User, error)
 	GetAll(c context.Context) ([]User, error)
 	GetByString(c context.Context, somestr string) ([]User, error)
 	UpdateSingle(c context.Context, userId string, user map[string]any) error
@@ -35,6 +35,6 @@ type UserRepository interface {
 type UserUsecase interface {
 	CreateUser(c context.Context, user *User) error
 	UpdateUser(c context.Context, userId string, user map[string]any) error
-	GetUserById(c context.Context, userId string) (User, error)
+	GetUserById(c context.Context, userId string) (*User, error)
 	SearchUser(c context.Context, userString string) ([]User, error) //this is like find by email or something like this
 }

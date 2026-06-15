@@ -65,7 +65,7 @@ func (userRep *userRepository) GetByString(c context.Context, someStr string) ([
 
 	return users, nil
 }
-func (usrRep *userRepository) GetSingleById(c context.Context, userId string) (model.User, error) {
+func (usrRep *userRepository) GetSingleById(c context.Context, userId string) (*model.User, error) {
 	usrCol := usrRep.db.Collection(usrRep.collection)
 
 	var result model.User
@@ -74,17 +74,17 @@ func (usrRep *userRepository) GetSingleById(c context.Context, userId string) (m
 
 	if err != nil {
 		log.Println("error while getting objectid", err)
-		return model.User{}, err
+		return &model.User{}, err
 	}
 	filter := bson.D{{Key: "_id", Value: actId}}
 	err = usrCol.FindOne(c, filter).Decode(&result)
 
 	if err != nil {
 		log.Println("error while finding single user by userId", err)
-		return model.User{}, err
+		return &model.User{}, err
 	}
 
-	return result, nil
+	return &result, nil
 
 }
 
@@ -206,4 +206,3 @@ func (usrRep *userRepository) DeleteAll(c context.Context) error {
 	_, err := usrCol.DeleteMany(c, bson.M{})
 	return err
 }
-
