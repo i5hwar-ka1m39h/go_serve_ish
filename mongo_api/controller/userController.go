@@ -1,0 +1,57 @@
+package controller
+
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/i5hwar-ka1m39h/go_serve_ish/mongo_api/model"
+	"github.com/i5hwar-ka1m39h/go_serve_ish/mongo_api/utils"
+)
+
+
+
+
+
+type userController struct{
+	userUC model.UserUsecase
+}
+
+type requestBody struct{
+	Name string `json:"name"`
+	Email string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (userCntrl * userController) SignUpUser(w http.ResponseWriter, r *http.Request){
+
+	var reqBody requestBody
+	decoder := json.NewDecoder(r.Body)
+
+	if err := decoder.Decode(&reqBody); err != nil{
+	
+		utils.ErrorSend(err, "error occured while reading body", w, http.StatusBadRequest)
+		return
+	}
+
+	hashedPassowrd := utils.HashPass(reqBody.Password)
+
+	user := model.User{
+		Name: reqBody.Name,
+		Email: reqBody.Email,
+		Password: hashedPassowrd,
+		CreateAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	err := userCntrl.userUC.CreateUser(r.Context(), &user)
+
+	if err != nil{
+		utils.ErrorSend(err, "failed to create user", w, http.StatusInternalServerError)
+		return
+	}
+
+
+	utils.SendJsonResponse("")
+}
