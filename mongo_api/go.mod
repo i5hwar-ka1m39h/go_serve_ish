@@ -3,6 +3,7 @@ module github.com/i5hwar-ka1m39h/go_serve_ish/mongo_api
 go 1.25.0
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/compress v1.17.6 // indirect
