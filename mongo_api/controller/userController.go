@@ -24,6 +24,11 @@ type requestBody struct{
 	Password string `json:"password"`
 }
 
+type SignUpResponse struct{
+	Message string `json:"message"`
+	JWTtoken string `json:"token"`
+}
+
 func (userCntrl * userController) SignUpUser(w http.ResponseWriter, r *http.Request){
 
 	var reqBody requestBody
@@ -44,7 +49,7 @@ func (userCntrl * userController) SignUpUser(w http.ResponseWriter, r *http.Requ
 		CreateAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-
+	
 	err := userCntrl.userUC.CreateUser(r.Context(), &user)
 
 	if err != nil{
@@ -52,6 +57,17 @@ func (userCntrl * userController) SignUpUser(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	jwtToken , err := utils.CreateToken(reqBody.Email)
+	if err != nil{
+		utils.ErrorSend(err, "error while getting jwt", w, http.StatusInternalServerError)
+		return
+	}
 
-	utils.SendJsonResponse("")
+	utils.SendJsonResponse(SignUpResponse{
+		Message: "user signed up successfully",
+		JWTtoken: jwtToken,
+	}, w, http.StatusCreated )
 }
+
+
+func()

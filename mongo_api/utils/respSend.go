@@ -11,20 +11,12 @@ import (
 
 func SendJsonResponse( resPayload any, w http.ResponseWriter, code int){
 
-	data, err := json.Marshal(resPayload)
-
-	if err != nil{
-		log.Println("error marshaling response object ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.Header().Add("Content-type", "application/json")
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(code)
 
-	w.Write(data)
-
-
-
+	if err :=json.NewEncoder(w).Encode(resPayload); err != nil{
+		log.Println("error in encoding json", err)
+	}
 
 
 }
