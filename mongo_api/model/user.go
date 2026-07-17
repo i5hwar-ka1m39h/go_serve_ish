@@ -8,12 +8,13 @@ import (
 )
 
 type User struct {
-	ID        primitive.ObjectID `bson:"_id" json:"userId"`
-	Name      string             `bson:"name" json:"name"`
-	Email     string             `bson:"email" json:"email"`
-	Password  string             `bson:"password" json:"-"`
-	CreateAt  time.Time          `bson:"createdAt" json:"createdAt"`
-	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`
+	ID           primitive.ObjectID `bson:"_id" json:"userId"`
+	Name         string             `bson:"name" json:"name"`
+	Email        string             `bson:"email" json:"email"`
+	Password     string             `bson:"password" json:"-"`
+	RefreshToken string             `bson:"refreshToken" json:"-"`
+	CreateAt     time.Time          `bson:"createdAt" json:"createdAt"`
+	UpdatedAt    time.Time          `bson:"updatedAt" json:"updatedAt"`
 }
 
 // this will talk to database
