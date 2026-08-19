@@ -71,3 +71,42 @@ func (userCntrl *userController) SignUpUser(w http.ResponseWriter, r *http.Reque
 		JWTtoken: jwtToken,
 	}, w, http.StatusCreated)
 }
+
+type requestBodyGetUser struct {
+	Id string `json:"id"`
+}
+
+type GetUserResp struct {
+	Message string      `json:"message"`
+	User    *model.User `json:"user"`
+}
+
+func (usrcntr *userController) GetUserById(w http.ResponseWriter, r *http.Request) {
+
+	var requestBody requestBodyGetUser
+	decoder := json.NewDecoder(r.Body)
+
+	if err := decoder.Decode(&requestBody); err != nil {
+		utils.ErrorSend(err, "error reading body", w, http.StatusBadRequest)
+		return
+	}
+
+	user, err := usrcntr.userUC.GetUserById(r.Context(), requestBody.Id)
+	if err != nil {
+		utils.ErrorSend(err, "error occured while getting the user", w, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SendJsonResponse(GetUserResp{
+		Message: "user found with given id",
+		User:    user,
+	}, w, http.StatusOK)
+
+}
+
+func (usrcntr *userController) UpdateUserbyId(w http.ResponseWriter, r *http.Request) {
+	var requestBody any
+
+	id := r.PathValue("id")
+	usrcntr.userUC.UpdateUser(r.Context(), id)
+}
