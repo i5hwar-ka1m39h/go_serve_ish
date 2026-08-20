@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"log"
+	"maps"
 	"net/http"
 	"time"
 
@@ -104,9 +105,45 @@ func (usrcntr *userController) GetUserById(w http.ResponseWriter, r *http.Reques
 
 }
 
+type UserUpdateBody struct {
+	Name     *string `json:"name"`
+	Email    *string `json:"email"`
+	Password *string `json:"password"`
+}
+
 func (usrcntr *userController) UpdateUserbyId(w http.ResponseWriter, r *http.Request) {
-	var requestBody any
+	var requestBody UserUpdateBody
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&requestBody); err != nil {
+		utils.ErrorSend(err, "error occured while reading body", w, http.StatusBadRequest)
+
+		return
+	}
+
+	update := make(map[string]any)
+
+	if requestBody.Email != nil {
+		update["email"] = *requestBody.Email
+	}
+
+	if requestBody.Name != nil {
+		update["name"] = *requestBody.Name
+	}
+
+	if requestBody.Password != nil {
+		update["password"] = *requestBody.Password
+	}
 
 	id := r.PathValue("id")
-	usrcntr.userUC.UpdateUser(r.Context(), id)
+	err := usrcntr.userUC.UpdateUser(r.Context(), id, update)
+
+	if err != nil {
+		utils.ErrorSend(err, "error updating user", w, http.StatusInternalServerError)
+
+		return
+	}
+
+	utils.SendJsonResponse()
 }
