@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -48,13 +47,22 @@ func CreateRefreshToken(email string) (string, error) {
 	return token.SignedString(secret)
 }
 
-func ValidateToken(tokenString string)(*Claims, error){
-	jwt.ParseWithClaims(tokenString, &Claims{}, 
-		func(token *jwt.Token)(interface{}, error){
-if _, ok := token.Method.(*jwt.SigningMethodHS256); !ok{
-				return  nil, fmt.Errorf("token authentication fucked %v", token.Header["alg"] )
-			}
-			return  
+func ValidateToken(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("fucked in token verification", t.Header["alg"])
 		}
-}
+		return secret, nil
+	})
 
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid toke")
+	}
+
+	return claims, nil
+}
