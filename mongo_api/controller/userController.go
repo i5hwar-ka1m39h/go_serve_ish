@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"log"
-	"maps"
 	"net/http"
 	"time"
 
@@ -111,6 +110,10 @@ type UserUpdateBody struct {
 	Password *string `json:"password"`
 }
 
+type UpdateResp struct {
+	Message string `json:"message"`
+}
+
 func (usrcntr *userController) UpdateUserbyId(w http.ResponseWriter, r *http.Request) {
 	var requestBody UserUpdateBody
 
@@ -145,5 +148,47 @@ func (usrcntr *userController) UpdateUserbyId(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	utils.SendJsonResponse()
+	utils.SendJsonResponse(UpdateResp{Message: "Updated the user successfully"}, w, http.StatusOK)
+}
+
+type SearchReqBody struct {
+	Email string `json:"email"`
+}
+
+type UserResp struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
+}
+type SearchRsp struct {
+	Users   []UserResp `json:"users"`
+	Message string     `json:"message"`
+}
+
+func (usrCntrl *userController) SearchUser(w http.ResponseWriter, r *http.Request) {
+	var searchRequestBody SearchReqBody
+	decoder := json.NewDecoder(r.Body)
+
+	if err := decoder.Decode(&searchRequestBody); err != nil {
+		utils.ErrorSend(err, "error occured while reading request", w, http.StatusBadRequest)
+		return
+	}
+
+	users, err := usrCntrl.userUC.SearchUser(r.Context(), searchRequestBody.Email)
+	if err != nil {
+		utils.ErrorSend(err, "error getting the user", w, http.StatusNotFound)
+		return
+	}
+
+	userRes := make([]UserResp, len(users))
+
+	for _, usr := range users {
+		var user = UserResp{
+			Email: usr.Email,
+			Name:  usr.Name,
+		}
+		userRes = append(userRes, user)
+	}
+
+	utils.SendJsonResponse(userRes, w, http.StatusOK)
+
 }
